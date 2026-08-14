@@ -5,7 +5,7 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: SENDGRID_API_KEY
+      - key: GMAIL_USER
         sync: false
-      - key: SENDGRID_FROM_EMAIL
+      - key: GMAIL_APP_PASSWORD
         sync: false

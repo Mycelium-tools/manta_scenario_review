@@ -12,26 +12,20 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 import io
-import base64
-
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail, Attachment
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def make_csv_attachment(fieldnames: list, rows: list, filename: str) -> Attachment:
+def make_csv_attachment(fieldnames: list, rows: list, filename: str) -> tuple[str, str]:
     buf = io.StringIO()
     writer = csv.DictWriter(buf, fieldnames=fieldnames)
     writer.writeheader()
     writer.writerows(rows)
-    encoded = base64.b64encode(buf.getvalue().encode()).decode()
-    return Attachment(
-        file_content=encoded,
-        file_name=filename,
-        file_type="text/csv",
-        disposition="attachment",
-    )
+    return (filename, buf.getvalue())
 
 app = FastAPI(title="MANTA Review API")
 
@@ -45,8 +39,8 @@ app.add_middleware(
 RECIPIENT_EMAILS = ["Allenlu0007@gmail.com", "my.isabella.luong@gmail.com", "chen.joyee@gmail.com"]
 
 # --- Email config: set these as environment variables ---
-# SENDGRID_API_KEY  — your SendGrid API key
-# SENDGRID_FROM_EMAIL — verified sender address (e.g. your@domain.com)
+# GMAIL_USER — Gmail/Google Workspace address to send from
+# GMAIL_APP_PASSWORD — App Password for that account (myaccount.google.com/apppasswords)
 
 CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "manta_questions.csv")
 # Previous 40-conversation opus set archived in archive/
@@ -175,29 +169,36 @@ class ReviewSubmission(BaseModel):
     is_test: bool = False
 
 
-def _send_via_sendgrid(*, subject: str, html_body: str, to: list[str], cc: Optional[str] = None, attachment: Optional[Attachment] = None):
-    api_key = os.environ.get("SENDGRID_API_KEY", "")
-    from_email = os.environ.get("SENDGRID_FROM_EMAIL", "")
-    print(f"DEBUG from_email={from_email!r} key_prefix={api_key[:12]!r}")
-    if not api_key or not from_email:
-        print("WARNING: SENDGRID_API_KEY or SENDGRID_FROM_EMAIL not set. Email not sent.")
+def _send_email(*, subject: str, html_body: str, to: list[str], cc: Optional[str] = None, attachment: Optional[tuple[str, str]] = None):
+    user = os.environ.get("GMAIL_USER", "")
+    password = os.environ.get("GMAIL_APP_PASSWORD", "").replace(" ", "")
+    if not user or not password:
+        print("WARNING: GMAIL_USER or GMAIL_APP_PASSWORD not set. Email not sent.")
         return
-    to_list = list(to)
+
+    msg = MIMEMultipart()
+    msg["Subject"] = subject
+    msg["From"] = user
+    msg["To"] = ", ".join(to)
+    recipients = list(to)
     if cc:
-        to_list.append(cc)
-    message = Mail(from_email=from_email, to_emails=to_list, subject=subject, html_content=html_body)
+        msg["Cc"] = cc
+        recipients.append(cc)
+    msg.attach(MIMEText(html_body, "html"))
     if attachment:
-        message.add_attachment(attachment)
-    sg = SendGridAPIClient(api_key)
+        filename, content = attachment
+        part = MIMEApplication(content.encode("utf-8"), Name=filename)
+        part["Content-Disposition"] = f'attachment; filename="{filename}"'
+        msg.attach(part)
+
     try:
-        response = sg.send(message)
-        print(f"SendGrid response: {response.status_code}")
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=30) as server:
+            server.starttls()
+            server.login(user, password)
+            server.sendmail(user, recipients, msg.as_string())
+        print(f"Email sent to {recipients}")
     except Exception as e:
-        try:
-            body = e.body.decode("utf-8") if isinstance(e.body, bytes) else e.body
-        except Exception:
-            body = str(e)
-        print(f"SendGrid error: {body}")
+        print(f"SMTP error: {e}")
         raise
 
 
@@ -260,7 +261,7 @@ def send_email(submission: ReviewSubmission):
     prefix = "[TEST] " if submission.is_test else ""
     subject = f"{prefix}MANTA Review: {submission.reviewer_name} — {len(submission.responses)} scenarios"
     cc = submission.reviewer_email.strip() if submission.reviewer_email and submission.reviewer_email.strip() else None
-    _send_via_sendgrid(subject=subject, html_body=html_body, to=RECIPIENT_EMAILS, cc=cc, attachment=attachment)
+    _send_email(subject=subject, html_body=html_body, to=RECIPIENT_EMAILS, cc=cc, attachment=attachment)
 
 
 @app.get("/stylesheet.css")
@@ -391,7 +392,7 @@ def submit_judge(submission: JudgeSubmission):
     try:
         cc = submission.reviewer_email.strip() if submission.reviewer_email and submission.reviewer_email.strip() else None
         prefix = "[TEST] " if submission.is_test else ""
-        _send_via_sendgrid(
+        _send_email(
             subject=f"{prefix}MANTA Judge: {submission.reviewer_name} — {fully_scored}/{len(submission.responses)} fully scored, avg {overall_avg:.2f}",
             html_body=html_body,
             to=RECIPIENT_EMAILS,
@@ -478,7 +479,7 @@ def submit_writer(submission: WriterConvSubmission):
 
     try:
         cc = submission.reviewer_email.strip() if submission.reviewer_email and submission.reviewer_email.strip() else None
-        _send_via_sendgrid(
+        _send_email(
             subject=f"MANTA Writer: {submission.reviewer_name} — {len(completed)}/{len(submission.responses)} conversations, {total_turns} turns",
             html_body=html_body,
             to=RECIPIENT_EMAILS,
