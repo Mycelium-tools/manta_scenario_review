@@ -12,10 +12,10 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 import io
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.application import MIMEApplication
+import json
+import base64
+import urllib.request
+import urllib.error
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -39,8 +39,8 @@ app.add_middleware(
 RECIPIENT_EMAILS = ["Allenlu0007@gmail.com", "my.isabella.luong@gmail.com", "chen.joyee@gmail.com"]
 
 # --- Email config: set these as environment variables ---
-# GMAIL_USER — Gmail/Google Workspace address to send from
-# GMAIL_APP_PASSWORD — App Password for that account (myaccount.google.com/apppasswords)
+# BREVO_API_KEY — Brevo API key (xkeysib-...), from Settings → SMTP & API → API Keys
+# FROM_EMAIL (or GMAIL_USER) — sender address, must be a verified sender in Brevo
 
 CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "manta_questions.csv")
 # Previous 40-conversation opus set archived in archive/
@@ -170,35 +170,43 @@ class ReviewSubmission(BaseModel):
 
 
 def _send_email(*, subject: str, html_body: str, to: list[str], cc: Optional[str] = None, attachment: Optional[tuple[str, str]] = None):
-    user = os.environ.get("GMAIL_USER", "")
-    password = os.environ.get("GMAIL_APP_PASSWORD", "").replace(" ", "")
-    if not user or not password:
-        print("WARNING: GMAIL_USER or GMAIL_APP_PASSWORD not set. Email not sent.")
+    # Brevo HTTPS API (works on Render's free tier, where outbound SMTP ports are blocked)
+    api_key = os.environ.get("BREVO_API_KEY", "")
+    from_email = os.environ.get("FROM_EMAIL", "") or os.environ.get("GMAIL_USER", "")
+    if not api_key or not from_email:
+        print("WARNING: BREVO_API_KEY or sender address (FROM_EMAIL/GMAIL_USER) not set. Email not sent.")
         return
 
-    msg = MIMEMultipart()
-    msg["Subject"] = subject
-    msg["From"] = user
-    msg["To"] = ", ".join(to)
-    recipients = list(to)
+    payload = {
+        "sender": {"email": from_email, "name": "MANTA Review"},
+        "to": [{"email": addr} for addr in to],
+        "subject": subject,
+        "htmlContent": html_body,
+    }
     if cc:
-        msg["Cc"] = cc
-        recipients.append(cc)
-    msg.attach(MIMEText(html_body, "html"))
+        payload["cc"] = [{"email": cc}]
     if attachment:
         filename, content = attachment
-        part = MIMEApplication(content.encode("utf-8"), Name=filename)
-        part["Content-Disposition"] = f'attachment; filename="{filename}"'
-        msg.attach(part)
+        payload["attachment"] = [{
+            "name": filename,
+            "content": base64.b64encode(content.encode("utf-8")).decode(),
+        }]
 
+    req = urllib.request.Request(
+        "https://api.brevo.com/v3/smtp/email",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"api-key": api_key, "content-type": "application/json", "accept": "application/json"},
+        method="POST",
+    )
     try:
-        with smtplib.SMTP("smtp.gmail.com", 587, timeout=30) as server:
-            server.starttls()
-            server.login(user, password)
-            server.sendmail(user, recipients, msg.as_string())
-        print(f"Email sent to {recipients}")
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            print(f"Brevo response: {resp.status} {resp.read().decode()}")
+    except urllib.error.HTTPError as e:
+        body = e.read().decode(errors="replace")
+        print(f"Brevo error {e.code}: {body}")
+        raise Exception(f"Brevo {e.code}: {body}")
     except Exception as e:
-        print(f"SMTP error: {e}")
+        print(f"Brevo error: {e}")
         raise
 
 
