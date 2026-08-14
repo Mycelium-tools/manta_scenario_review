@@ -348,6 +348,10 @@ input[type="text"]:focus, input[type="email"]:focus { outline: none; border-colo
 }
 .eval-card-test { border-style: dashed; opacity: 0.7; }
 .eval-card-test:hover { opacity: 1; }
+.eval-card-judge { background: #f0eaf8; border-color: #ddd2ec; }
+.eval-card-judge:hover { background: #f6f2fb; border-color: #c9b9e4; }
+.eval-card-scenario { background: #f9f3da; border-color: #eae0b8; }
+.eval-card-scenario:hover { background: #fcf8e9; border-color: #ddcf9a; }
 
 /* Conversation turns (judge view) */
 .conversation { display: flex; flex-direction: column; gap: 14px; margin-bottom: 8px; }
