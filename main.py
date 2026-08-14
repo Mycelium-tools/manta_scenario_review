@@ -48,10 +48,11 @@ RECIPIENT_EMAILS = ["Allenlu0007@gmail.com", "my.isabella.luong@gmail.com", "che
 # SENDGRID_API_KEY  — your SendGrid API key
 # SENDGRID_FROM_EMAIL — verified sender address (e.g. your@domain.com)
 
-CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "manta_questions_1090.csv")
-CONV_CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "manta_judge_conversations_opus_4.7_5.5.26 - manta_judge_conversations_updated.csv")
+CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "manta_questions.csv")
+# Previous 40-conversation opus set archived in archive/
+CONV_CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "manta_judge_conversations_gemini_3.1_flash_lite.csv")
 
-CONV_LIMIT = 40
+CONV_LIMIT = 12
 
 
 def load_scenarios_from_csv():
