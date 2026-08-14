@@ -36,7 +36,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-RECIPIENT_EMAILS = ["Allenlu0007@gmail.com", "my.isabella.luong@gmail.com", "chen.joyee@gmail.com"]
+RECIPIENT_EMAILS = ["Allenlu0007@gmail.com", "allen@projectmycelium.ai", "my.isabella.luong@gmail.com", "chen.joyee@gmail.com"]
 
 # --- Email config: set these as environment variables ---
 # BREVO_API_KEY — Brevo API key (xkeysib-...), from Settings → SMTP & API → API Keys
