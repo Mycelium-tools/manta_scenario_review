@@ -309,13 +309,16 @@ def submit_judge(submission: JudgeSubmission):
 
     submission.submitted_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 
+    # Turn 1 is context-only and unrated; reviewers score turns 2-5
+    RATED_TURNS = range(2, 6)
+
     def conv_avg(ts: dict) -> Optional[float]:
-        vals = [v for v in ts.values() if v is not None]
+        vals = [ts.get(str(t)) for t in RATED_TURNS if ts.get(str(t)) is not None]
         return sum(vals) / len(vals) if vals else None
 
-    fully_scored = sum(1 for r in submission.responses if all(r.turn_scores.get(str(t)) is not None for t in range(1, 6)))
-    partially_scored = sum(1 for r in submission.responses if any(r.turn_scores.get(str(t)) is not None for t in range(1, 6)) and not all(r.turn_scores.get(str(t)) is not None for t in range(1, 6)))
-    all_scores = [v for r in submission.responses for v in r.turn_scores.values() if v is not None]
+    fully_scored = sum(1 for r in submission.responses if all(r.turn_scores.get(str(t)) is not None for t in RATED_TURNS))
+    partially_scored = sum(1 for r in submission.responses if any(r.turn_scores.get(str(t)) is not None for t in RATED_TURNS) and not all(r.turn_scores.get(str(t)) is not None for t in RATED_TURNS))
+    all_scores = [r.turn_scores.get(str(t)) for r in submission.responses for t in RATED_TURNS if r.turn_scores.get(str(t)) is not None]
     overall_avg = sum(all_scores) / len(all_scores) if all_scores else 0
 
     def score_color(v):
@@ -330,7 +333,7 @@ def submit_judge(submission: JudgeSubmission):
         avg_str = f"{avg:.2f}" if avg is not None else "—"
         turn_cells = "".join(
             f'<td style="padding:8px 10px;border-bottom:1px solid #eee;color:{score_color(r.turn_scores.get(str(t)))};font-weight:500;font-size:13px;text-align:center;">{f"{r.turn_scores.get(str(t)):.1f}" if r.turn_scores.get(str(t)) is not None else "—"}</td>'
-            for t in range(1, 6)
+            for t in RATED_TURNS
         )
         html_rows += f"""
         <tr>
@@ -362,7 +365,6 @@ def submit_judge(submission: JudgeSubmission):
         <thead>
           <tr style="background:#f5f5f2;">
             <th style="padding:8px 10px;text-align:left;font-weight:500;color:#555;font-size:12px;">Conv ID</th>
-            <th style="padding:8px 10px;text-align:center;font-weight:500;color:#555;font-size:12px;">T1</th>
             <th style="padding:8px 10px;text-align:center;font-weight:500;color:#555;font-size:12px;">T2</th>
             <th style="padding:8px 10px;text-align:center;font-weight:500;color:#555;font-size:12px;">T3</th>
             <th style="padding:8px 10px;text-align:center;font-weight:500;color:#555;font-size:12px;">T4</th>
@@ -381,7 +383,6 @@ def submit_judge(submission: JudgeSubmission):
         avg = conv_avg(r.turn_scores)
         csv_rows.append({
             "conversation_id": r.conversation_id,
-            "turn_1": r.turn_scores.get("1") if r.turn_scores.get("1") is not None else "",
             "turn_2": r.turn_scores.get("2") if r.turn_scores.get("2") is not None else "",
             "turn_3": r.turn_scores.get("3") if r.turn_scores.get("3") is not None else "",
             "turn_4": r.turn_scores.get("4") if r.turn_scores.get("4") is not None else "",
@@ -392,7 +393,7 @@ def submit_judge(submission: JudgeSubmission):
             "submitted_at": submission.submitted_at,
         })
     judge_attachment = make_csv_attachment(
-        ["conversation_id","turn_1","turn_2","turn_3","turn_4","turn_5","avg","notes","reviewer_name","submitted_at"],
+        ["conversation_id","turn_2","turn_3","turn_4","turn_5","avg","notes","reviewer_name","submitted_at"],
         csv_rows,
         f"manta_judge_{submission.reviewer_name.replace(' ','_')}.csv",
     )
