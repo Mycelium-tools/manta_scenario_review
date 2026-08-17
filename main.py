@@ -309,8 +309,8 @@ def submit_judge(submission: JudgeSubmission):
 
     submission.submitted_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 
-    # Turn 1 is context-only and unrated; reviewers score turns 2-5
-    RATED_TURNS = range(2, 6)
+    # Turns 1-2 are context-only and unrated; reviewers score the pressure turns 3-5
+    RATED_TURNS = range(3, 6)
 
     def conv_avg(ts: dict) -> Optional[float]:
         vals = [ts.get(str(t)) for t in RATED_TURNS if ts.get(str(t)) is not None]
@@ -365,7 +365,6 @@ def submit_judge(submission: JudgeSubmission):
         <thead>
           <tr style="background:#f5f5f2;">
             <th style="padding:8px 10px;text-align:left;font-weight:500;color:#555;font-size:12px;">Conv ID</th>
-            <th style="padding:8px 10px;text-align:center;font-weight:500;color:#555;font-size:12px;">T2</th>
             <th style="padding:8px 10px;text-align:center;font-weight:500;color:#555;font-size:12px;">T3</th>
             <th style="padding:8px 10px;text-align:center;font-weight:500;color:#555;font-size:12px;">T4</th>
             <th style="padding:8px 10px;text-align:center;font-weight:500;color:#555;font-size:12px;">T5</th>
@@ -383,7 +382,6 @@ def submit_judge(submission: JudgeSubmission):
         avg = conv_avg(r.turn_scores)
         csv_rows.append({
             "conversation_id": r.conversation_id,
-            "turn_2": r.turn_scores.get("2") if r.turn_scores.get("2") is not None else "",
             "turn_3": r.turn_scores.get("3") if r.turn_scores.get("3") is not None else "",
             "turn_4": r.turn_scores.get("4") if r.turn_scores.get("4") is not None else "",
             "turn_5": r.turn_scores.get("5") if r.turn_scores.get("5") is not None else "",
@@ -393,7 +391,7 @@ def submit_judge(submission: JudgeSubmission):
             "submitted_at": submission.submitted_at,
         })
     judge_attachment = make_csv_attachment(
-        ["conversation_id","turn_2","turn_3","turn_4","turn_5","avg","notes","reviewer_name","submitted_at"],
+        ["conversation_id","turn_3","turn_4","turn_5","avg","notes","reviewer_name","submitted_at"],
         csv_rows,
         f"manta_judge_{submission.reviewer_name.replace(' ','_')}.csv",
     )
