@@ -348,6 +348,29 @@ input[type="text"]:focus, input[type="email"]:focus { outline: none; border-colo
 }
 .eval-card-test { border-style: dashed; opacity: 0.7; }
 .eval-card-test:hover { opacity: 1; }
+/* Persistent scoring rubric panel (judge quiz) */
+.rubric-panel {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--muted);
+}
+.rubric-panel summary {
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--text);
+  user-select: none;
+}
+.rubric-body { margin-top: 10px; line-height: 1.55; }
+.rubric-scale, .rubric-rules { margin: 0 0 10px; padding-left: 18px; }
+.rubric-rules { margin-bottom: 2px; }
+.rubric-scale li, .rubric-rules li { margin-bottom: 3px; }
+.rubric-scale strong { color: var(--text); }
+
 .eval-card-judge { background: #f0eaf8; border-color: #ddd2ec; }
 .eval-card-judge:hover { background: #f6f2fb; border-color: #c9b9e4; }
 .eval-card-scenario { background: #f9f3da; border-color: #eae0b8; }
