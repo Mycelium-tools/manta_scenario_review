@@ -31,7 +31,7 @@ body {
 }
 
 .shell {
-  max-width: 720px;
+  max-width: 980px;
   margin: 0 auto;
   padding: 32px 24px 80px;
 }
@@ -198,7 +198,7 @@ button:disabled { opacity: 0.35; cursor: default; }
 .btn-row { display: flex; gap: 8px; }
 
 /* Intro page */
-.intro { max-width: 560px; }
+.intro { max-width: none; }
 .intro h2 { font-size: 20px; font-weight: normal; margin-bottom: 16px; }
 .intro p { font-size: 15px; color: var(--muted); font-family: system-ui, sans-serif; margin-bottom: 14px; line-height: 1.65; }
 .intro-list { list-style: none; margin: 20px 0 28px; display: flex; flex-direction: column; gap: 8px; }
@@ -348,6 +348,31 @@ input[type="text"]:focus, input[type="email"]:focus { outline: none; border-colo
 }
 .eval-card-test { border-style: dashed; opacity: 0.7; }
 .eval-card-test:hover { opacity: 1; }
+/* Persistent scoring rubric panel (judge quiz) */
+.rubric-panel {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 22px;
+  margin-bottom: 20px;
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--muted);
+}
+.rubric-panel summary {
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--text);
+  user-select: none;
+  padding: 4px 0;
+}
+.rubric-body { margin-top: 14px; padding: 2px 6px 6px; line-height: 1.7; }
+.rubric-scale, .rubric-rules { margin: 0 0 18px; padding-left: 22px; }
+.rubric-rules { margin-bottom: 4px; }
+.rubric-scale li { margin-bottom: 7px; }
+.rubric-rules li { margin-bottom: 9px; }
+.rubric-scale strong { color: var(--text); }
+
 .eval-card-judge { background: #f0eaf8; border-color: #ddd2ec; }
 .eval-card-judge:hover { background: #f6f2fb; border-color: #c9b9e4; }
 .eval-card-scenario { background: #f9f3da; border-color: #eae0b8; }
@@ -364,8 +389,9 @@ input[type="text"]:focus, input[type="email"]:focus { outline: none; border-colo
   line-height: 1.6;
   max-width: 92%;
 }
-.turn-user { background: var(--surface2); border: 1px solid var(--border); align-self: flex-start; }
-.turn-assistant { background: var(--blue-bg); border: 1px solid #c5dcf5; align-self: flex-end; }
+.turn-user { background: var(--surface2); border: 1px solid var(--border); margin-left: auto; }
+.turn-assistant { background: var(--blue-bg); border: 1px solid #c5dcf5; margin-right: auto; }
+.conversation div:has(> .turn-user) .turn-label { text-align: right; }
 
 /* Score slider (judge view) */
 .score-wrap { display: flex; align-items: center; gap: 12px; margin: 10px 0 4px; }
