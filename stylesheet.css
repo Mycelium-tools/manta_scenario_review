@@ -353,8 +353,8 @@ input[type="text"]:focus, input[type="email"]:focus { outline: none; border-colo
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 10px 14px;
-  margin-bottom: 16px;
+  padding: 14px 22px;
+  margin-bottom: 20px;
   font-family: system-ui, sans-serif;
   font-size: 13px;
   color: var(--muted);
@@ -364,11 +364,13 @@ input[type="text"]:focus, input[type="email"]:focus { outline: none; border-colo
   font-weight: 500;
   color: var(--text);
   user-select: none;
+  padding: 4px 0;
 }
-.rubric-body { margin-top: 10px; line-height: 1.55; }
-.rubric-scale, .rubric-rules { margin: 0 0 10px; padding-left: 18px; }
-.rubric-rules { margin-bottom: 2px; }
-.rubric-scale li, .rubric-rules li { margin-bottom: 3px; }
+.rubric-body { margin-top: 14px; padding: 2px 6px 6px; line-height: 1.7; }
+.rubric-scale, .rubric-rules { margin: 0 0 18px; padding-left: 22px; }
+.rubric-rules { margin-bottom: 4px; }
+.rubric-scale li { margin-bottom: 7px; }
+.rubric-rules li { margin-bottom: 9px; }
 .rubric-scale strong { color: var(--text); }
 
 .eval-card-judge { background: #f0eaf8; border-color: #ddd2ec; }
